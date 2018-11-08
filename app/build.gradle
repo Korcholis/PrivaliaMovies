@@ -1,0 +1,57 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+apply from: "$rootDir/buildsystem/dependencies.gradle"
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "com.korcholis.privaliamovies"
+        minSdkVersion 19
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    buildTypes.each {
+        it.buildConfigField 'String', 'TMDB_API_KEY', TMDB_API_KEY
+    }
+}
+
+dependencies {
+    implementation libraries.jars
+
+    implementation libraries.kotlin
+    implementation libraries.appcompat
+    implementation libraries.support_v4
+    implementation libraries.recyclerview
+    implementation libraries.design
+    implementation libraries.cardview
+    implementation libraries.palette
+
+    implementation libraries.rx_android
+    implementation libraries.rx_java
+    implementation libraries.rx_kotlin
+    implementation libraries.retrofit
+    implementation libraries.retrofit_rx_adapter
+    implementation libraries.moshi
+    kapt libraries.moshi_codegen
+    implementation libraries.moshi_converter
+
+    implementation libraries.picasso
+    implementation libraries.picasso_palette
+
+    testImplementation libraries.junit
+    androidTestImplementation libraries.test_runner
+    androidTestImplementation libraries.espresso
+}

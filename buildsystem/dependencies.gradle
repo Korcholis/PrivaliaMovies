@@ -1,0 +1,52 @@
+ext.versions = [
+        kotlin : '1.3.0',
+        android : '28.0.0',
+        lifecycle : '1.1.1',
+        constraint : '1.1.3',
+        retrofit : '2.3.0',
+        moshi : '1.6.0',
+        android_test : '1.0.2',
+        espresso : '3.0.2',
+        junit : '4.12',
+        rx_java : '2.2.2',
+        rx_android : '2.1.0',
+        rx_kotlin : '2.3.0',
+        picasso : '2.5.2',
+        picasso_palette : '2.0.0'
+]
+
+ext.libraries = [
+        jars : fileTree(dir: 'libs', include: ['*.jar']),
+
+        kotlin : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin",
+        support_v7 : "com.android.support:appcompat-v7:$versions.android",
+        appcompat : "com.android.support:support-compat:$versions.android",
+        support_v4 : "com.android.support:support-v4:$versions.android",
+        recyclerview : "com.android.support:recyclerview-v7:$versions.android",
+        design : "com.android.support:design:$versions.android",
+        cardview : "com.android.support:cardview-v7:$versions.android",
+        palette : "com.android.support:palette-v7:$versions.android",
+        constraint : "com.android.support.constraint:constraint-layout:$versions.constraint",
+        viewmodel : "android.arch.lifecycle:viewmodel:$versions.lifecycle",
+        lifecycle : "android.arch.lifecycle:extensions:$versions.lifecycle",
+
+        rx_java : "io.reactivex.rxjava2:rxjava:$versions.rx_java",
+        rx_android : "io.reactivex.rxjava2:rxandroid:$versions.rx_android",
+        rx_kotlin : "io.reactivex.rxjava2:rxkotlin:$versions.rx_kotlin",
+
+        retrofit : "com.squareup.retrofit2:retrofit:$versions.retrofit",
+        retrofit_rx_adapter : "com.squareup.retrofit2:adapter-rxjava2:$versions.retrofit",
+        moshi : "com.squareup.moshi:moshi:$versions.moshi",
+        moshi_codegen : "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi",
+        moshi_converter : "com.squareup.retrofit2:converter-moshi:$versions.retrofit",
+
+        picasso : "com.squareup.picasso:picasso:$versions.picasso",
+        picasso_palette : "com.github.florent37:picassopalette:$versions.picasso_palette",
+
+        test_rules : "com.android.support.test:rules:$versions.android_test",
+        test_runner : "com.android.support.test:runner:$versions.android_test",
+        espresso : "com.android.support.test.espresso:espresso-core:$versions.espresso",
+        espresso_intents : "com.android.support.test.espresso:espresso-intents:$versions.espresso",
+
+        junit : "junit:junit:$versions.junit"
+]
