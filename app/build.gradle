@@ -25,6 +25,7 @@ android {
 
     buildTypes.each {
         it.buildConfigField 'String', 'TMDB_API_KEY', TMDB_API_KEY
+        it.buildConfigField 'String', 'CACHE_DIR', CACHE_DIR
     }
 }
 
