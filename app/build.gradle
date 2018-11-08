@@ -39,6 +39,7 @@ dependencies {
     implementation libraries.design
     implementation libraries.cardview
     implementation libraries.palette
+    implementation libraries.constraint
 
     implementation libraries.rx_android
     implementation libraries.rx_java
