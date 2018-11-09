@@ -16,10 +16,15 @@ import java.util.*
 
 class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<MovieListAdapter.MovieViewHolder>() {
 
-    private var movieList: List<Movie> = listOf()
+    private var movieList: MutableList<Movie> = mutableListOf()
+
+    fun add(movies: List<Movie>) {
+        movieList.addAll(movies)
+        notifyDataSetChanged()
+    }
 
     fun swap(movies: List<Movie>) {
-        movieList = movies
+        movieList = movies.toMutableList()
         notifyDataSetChanged()
     }
 
@@ -36,14 +41,18 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
         val movie = movieList[position]
         holder.title.text = movie.title
         holder.synopsis.text = movie.synopsis
-        holder.releaseYear.text = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(movie.releaseDate).year.toString()
+
+        val calendar = Calendar.getInstance()
+        calendar.time = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(movie.releaseDate)
+
+        holder.releaseYear.text = calendar.get(Calendar.YEAR).toString()
         Picasso.with(context).load(movie.getPosterPath()).into(holder.poster)
     }
 
     class MovieViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val poster : AppCompatImageView = view.poster
-        val title : AppCompatTextView = view.title
-        val synopsis : AppCompatTextView = view.synopsis
-        val releaseYear : AppCompatTextView = view.releaseYear
+        val poster: AppCompatImageView = view.poster
+        val title: AppCompatTextView = view.title
+        val synopsis: AppCompatTextView = view.synopsis
+        val releaseYear: AppCompatTextView = view.releaseYear
     }
 }

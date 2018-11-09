@@ -8,34 +8,36 @@
 
     <android.support.v7.widget.AppCompatImageView
         android:id="@+id/poster"
-        android:layout_width="100dp"
-        android:layout_height="128dp"
+        android:layout_width="200dp"
+        android:layout_height="256dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/synopsis"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@+id/title" />
 
     <android.support.v7.widget.AppCompatTextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
         android:fontFamily="sans-serif-medium"
-        android:textSize="18sp"
+        android:textSize="36sp"
         app:layout_constraintEnd_toStartOf="@+id/releaseYear"
         app:layout_constraintStart_toEndOf="@+id/poster"
-        app:layout_constraintTop_toTopOf="@+id/poster"
+        app:layout_constraintTop_toTopOf="parent"
         tools:text="Movie title" />
 
     <android.support.v7.widget.AppCompatTextView
         android:id="@+id/synopsis"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="8dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toBottomOf="@+id/poster"
+        android:textSize="28sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/releaseYear"
         app:layout_constraintStart_toStartOf="@+id/title"
         app:layout_constraintTop_toBottomOf="@+id/title"
@@ -45,13 +47,13 @@
         android:id="@+id/releaseYear"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:textSize="12sp"
+        android:layout_marginEnd="16dp"
+        android:textSize="24sp"
         android:textStyle="italic"
         app:layout_constraintBottom_toTopOf="@+id/title"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title"
-        app:layout_goneMarginEnd="16dp"
+        app:layout_goneMarginEnd="32dp"
         tools:text="2018" />
 
 </android.support.constraint.ConstraintLayout>
