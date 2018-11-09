@@ -10,10 +10,10 @@ data class Movie(
         val title: String,
         @Json(name = "overview") val synopsis: String,
         @Json(name = "release_date") val releaseDate: String,
-        @Json(name = "vote_average") val voteAverate: Double
+        @Json(name = "vote_average") val voteAverage: Double
 ) {
     companion object {
-        private val TMDB_IMAGE_URL = "http://image.tmdb.org/t/p/w185/"
+        private const val TMDB_IMAGE_URL = "http://image.tmdb.org/t/p/w185/"
     }
 
     fun getPosterPath(relativePath: Boolean = false) = (if (relativePath) "" else TMDB_IMAGE_URL) + poster
