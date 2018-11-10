@@ -62,12 +62,16 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
         holder.title?.text = movie.title
         holder.synopsis?.text = movie.synopsis
 
-        val calendar = Calendar.getInstance()
-        calendar.time = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(movie.releaseDate)
+        if (movie.releaseDate.isNotEmpty()) {
+            val calendar = Calendar.getInstance()
+            calendar.time = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(movie.releaseDate)
+            holder.releaseYear?.text = calendar.get(Calendar.YEAR).toString()
+        }
 
-        holder.releaseYear?.text = calendar.get(Calendar.YEAR).toString()
         holder?.poster.let {
-            Picasso.with(context).load(movie.getPosterPath()).into(holder.poster)
+            movie.poster?.let {
+                Picasso.with(context).load(movie.getPosterPath()).into(holder.poster)
+            }
         }
     }
 
@@ -79,7 +83,7 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
 
         constructor(view: View, type: Int) : super(view) {
             if (type == CELL_TYPE_MOVIE) {
-                poster= view.poster
+                poster = view.poster
                 title = view.title
                 synopsis = view.synopsis
                 releaseYear = view.releaseYear
