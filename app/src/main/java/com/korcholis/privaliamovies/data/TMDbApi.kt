@@ -14,24 +14,22 @@ import java.io.File
 
 object TMDbApi {
     private var instance: Retrofit? = null
-    private var context: Context? = null
 
     fun instance(context: Context): TMDbApiSignature {
-        TMDbApi.context = context
         if (instance == null) {
             instance = Retrofit.Builder()
                     .baseUrl(TMDbApiSignature.TMDB_URL)
                     .addConverterFactory(MoshiConverterFactory.create())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                    .client(createOkHttpClient())
+                    .client(createOkHttpClient(context))
                     .build()
         }
 
         return instance!!.create(TMDbApiSignature::class.java)
     }
 
-    private fun createOkHttpClient(): OkHttpClient {
-        val httpCacheDirectory = File(context!!.cacheDir, Constants.CACHE_DIR)
+    private fun createOkHttpClient(context: Context): OkHttpClient {
+        val httpCacheDirectory = File(context.cacheDir, Constants.CACHE_DIR)
         val cacheSize = 10L * 1024L * 1024L // 10 MiB
         val cache = Cache(httpCacheDirectory, cacheSize)
 
@@ -48,7 +46,7 @@ object TMDbApi {
             chain.proceed(request)
         }.addNetworkInterceptor { chain ->
             val originalResponse = chain.proceed(chain.request())
-            if (context != null && ConnectionChecker.isNetworkAvailable(context!!)) {
+            if (context != null && ConnectionChecker.isNetworkAvailable(context)) {
                 val maxAge = 60 // read from cache for 1 minute
                 originalResponse.newBuilder()
                         .header("Cache-Control", "public, max-age=$maxAge")
@@ -60,7 +58,7 @@ object TMDbApi {
                         .build()
             }
         }.addInterceptor { chain ->
-            if (context != null && ConnectionChecker.isNetworkAvailable(context!!)) {
+            if (context != null && ConnectionChecker.isNetworkAvailable(context)) {
                 chain.proceed(chain.request())
             } else {
                 throw ConnectionNotAvailableException()
