@@ -14,7 +14,13 @@ import kotlinx.android.synthetic.main.movie_list_item.view.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<MovieListAdapter.MovieViewHolder>() {
+
+class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<MovieListAdapter.MovieOrLoadingViewHolder>() {
+
+    companion object {
+        const val CELL_TYPE_MOVIE = 0
+        const val CELL_TYPE_LOADING = 1
+    }
 
     private var movieList: MutableList<Movie> = mutableListOf()
 
@@ -28,31 +34,56 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, p1: Int): MovieViewHolder {
-        val view = LayoutInflater.from(context).inflate(R.layout.movie_list_item, parent, false)
-        return MovieViewHolder(view)
+    override fun onCreateViewHolder(parent: ViewGroup, position: Int): MovieOrLoadingViewHolder {
+        if (getItemViewType(position) == CELL_TYPE_MOVIE) {
+            val view = LayoutInflater.from(context).inflate(R.layout.movie_list_item, parent, false)
+            return MovieOrLoadingViewHolder(view, CELL_TYPE_MOVIE)
+        } else {
+            val view = LayoutInflater.from(context).inflate(R.layout.loading_movie_item, parent, false)
+            return MovieOrLoadingViewHolder(view, CELL_TYPE_LOADING)
+        }
     }
 
     override fun getItemCount(): Int {
-        return movieList.size
+        return movieList.size + 1
     }
 
-    override fun onBindViewHolder(holder: MovieViewHolder, position: Int) {
+    override fun getItemViewType(position: Int): Int {
+        return if (position >= movieList.size)
+            CELL_TYPE_LOADING
+        else
+            CELL_TYPE_MOVIE
+    }
+
+    override fun onBindViewHolder(holder: MovieOrLoadingViewHolder, position: Int) {
+        if (getItemViewType(position) == CELL_TYPE_LOADING) return
+
         val movie = movieList[position]
-        holder.title.text = movie.title
-        holder.synopsis.text = movie.synopsis
+        holder.title?.text = movie.title
+        holder.synopsis?.text = movie.synopsis
 
         val calendar = Calendar.getInstance()
         calendar.time = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(movie.releaseDate)
 
-        holder.releaseYear.text = calendar.get(Calendar.YEAR).toString()
-        Picasso.with(context).load(movie.getPosterPath()).into(holder.poster)
+        holder.releaseYear?.text = calendar.get(Calendar.YEAR).toString()
+        holder?.poster.let {
+            Picasso.with(context).load(movie.getPosterPath()).into(holder.poster)
+        }
     }
 
-    class MovieViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val poster: AppCompatImageView = view.poster
-        val title: AppCompatTextView = view.title
-        val synopsis: AppCompatTextView = view.synopsis
-        val releaseYear: AppCompatTextView = view.releaseYear
+    class MovieOrLoadingViewHolder : RecyclerView.ViewHolder {
+        var poster: AppCompatImageView? = null
+        var title: AppCompatTextView? = null
+        var synopsis: AppCompatTextView? = null
+        var releaseYear: AppCompatTextView? = null
+
+        constructor(view: View, type: Int) : super(view) {
+            if (type == CELL_TYPE_MOVIE) {
+                poster= view.poster
+                title = view.title
+                synopsis = view.synopsis
+                releaseYear = view.releaseYear
+            }
+        }
     }
 }
