@@ -6,7 +6,9 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.Menu
 import android.view.MenuItem
+import com.ferfalk.simplesearchview.SimpleSearchView
 import com.korcholis.privaliamovies.data.TMDbApi
+import com.korcholis.privaliamovies.models.Movie
 import com.korcholis.privaliamovies.models.MovieList
 import com.korcholis.privaliamovies.ui.EndlessRecyclerViewScrollListener
 import com.korcholis.privaliamovies.ui.MovieListAdapter
@@ -19,13 +21,14 @@ import kotlinx.android.synthetic.main.movie_list_content.*
 class MovieListActivity : AppCompatActivity() {
 
     private var loadedUpTo: Int = 0
+    private var currentSearch: String = ""
 
     private var moviesAdapter: MovieListAdapter = MovieListAdapter(this)
     private val disposables = CompositeDisposable()
     private var layoutManager: LinearLayoutManager = LinearLayoutManager(this)
     private val scrollListener = object : EndlessRecyclerViewScrollListener(layoutManager) {
         override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView) {
-            getMoreMovies(page)
+            getMoreMovies(currentSearch, page)
         }
     }
 
@@ -39,6 +42,29 @@ class MovieListActivity : AppCompatActivity() {
         movieList.adapter = moviesAdapter
         movieList.layoutManager = layoutManager
         movieList.addOnScrollListener(scrollListener)
+
+        searchView.setOnQueryTextListener(object : SimpleSearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                newText?.let {
+                    if (newText.length > 3 || newText.isEmpty()) {
+                        getMoreMovies(newText)
+                    }
+                }
+
+                return true
+            }
+
+            override fun onQueryTextCleared(): Boolean {
+                getMoreMovies()
+
+                return true
+            }
+
+        })
     }
 
     override fun onDestroy() {
@@ -62,37 +88,69 @@ class MovieListActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun getMoreMovies(page: Int = 1) {
-        if (page <= loadedUpTo) return
+    private fun getMoreMovies(query: String = "", page: Int = 1) {
+        if (query != currentSearch) {
+            loadedUpTo = 1
+            currentSearch = query
+            resetList(mutableListOf())
+        } else if (page <= loadedUpTo) {
+            return
+        }
 
-        disposables.add(
-                TMDbApi.instance(this)
-                        .movieList(page)
-                        .subscribeOn(Schedulers.computation())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .doOnError {
-                            it.localizedMessage
-                        }
-                        .subscribe { response: MovieList, issue ->
-                            loadedUpTo = page
+        disposables.clear()
 
-                            if (issue != null) {
-                                issue.localizedMessage
+        if (query.isEmpty()) {
+            disposables.add(
+                    TMDbApi.instance(this)
+                            .movieList(page)
+                            .subscribeOn(Schedulers.computation())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .doOnError {
+                                it.localizedMessage
                             }
-                            if (loadedUpTo == 1) {
-                                resetList(response)
-                            } else {
-                                updateList(response)
+                            .subscribe { response: MovieList, issue ->
+                                loadedUpTo = page
+
+                                if (issue != null) {
+                                    issue.localizedMessage
+                                }
+                                if (loadedUpTo == 1) {
+                                    resetList(response.results)
+                                } else {
+                                    updateList(response.results)
+                                }
                             }
-                        }
-        )
+            )
+        } else {
+            disposables.add(
+                    TMDbApi.instance(this)
+                            .search(query, page)
+                            .subscribeOn(Schedulers.computation())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .doOnError {
+                                it.localizedMessage
+                            }
+                            .subscribe { response: MovieList, issue ->
+                                loadedUpTo = page
+
+                                if (issue != null) {
+                                    issue.localizedMessage
+                                }
+                                if (loadedUpTo == 1) {
+                                    resetList(response.results)
+                                } else {
+                                    updateList(response.results)
+                                }
+                            }
+            )
+        }
     }
 
-    private fun resetList(response: MovieList) {
-        moviesAdapter.swap(response.results)
+    private fun resetList(movies: List<Movie>) {
+        moviesAdapter.swap(movies)
     }
 
-    private fun updateList(response: MovieList) {
-        moviesAdapter.add(response.results)
+    private fun updateList(movies: List<Movie>) {
+        moviesAdapter.add(movies)
     }
 }
