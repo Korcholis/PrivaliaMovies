@@ -90,6 +90,10 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
         }
     }
 
+    fun getList(): ArrayList<Movie> {
+        return movieList as ArrayList<Movie>
+    }
+
     class MovieOrLoadingViewHolder : RecyclerView.ViewHolder {
         var poster: AppCompatImageView? = null
         var title: AppCompatTextView? = null

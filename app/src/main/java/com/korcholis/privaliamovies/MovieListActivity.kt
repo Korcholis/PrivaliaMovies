@@ -1,9 +1,11 @@
 package com.korcholis.privaliamovies
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import com.ferfalk.simplesearchview.SimpleSearchView
@@ -18,19 +20,24 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_movie_list.*
 import kotlinx.android.synthetic.main.movie_list_content.*
 
+
 class MovieListActivity : AppCompatActivity() {
+
+    companion object {
+        private const val BUNDLE_LIST_STATE = "listState"
+        private const val BUNDLE_LIST_CONTENT = "movieList"
+        private const val BUNDLE_QUERY = "currentSearch"
+        private const val BUNDLE_PAGE = "loadedUpTo"
+    }
 
     private var loadedUpTo: Int = 0
     private var currentSearch: String = ""
+    private var listState: Parcelable? = null
 
     private var moviesAdapter: MovieListAdapter = MovieListAdapter(this)
     private val disposables = CompositeDisposable()
-    private var layoutManager: LinearLayoutManager = LinearLayoutManager(this)
-    private val scrollListener = object : EndlessRecyclerViewScrollListener(layoutManager) {
-        override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView) {
-            getMoreMovies(currentSearch, page)
-        }
-    }
+
+    private lateinit var scrollListener: EndlessRecyclerViewScrollListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +47,29 @@ class MovieListActivity : AppCompatActivity() {
         title = resources.getString(R.string.app_name)
 
         movieList.adapter = moviesAdapter
-        movieList.layoutManager = layoutManager
+
+        movieList.layoutManager = LinearLayoutManager(this)
+
+        savedInstanceState?.let {
+            moviesAdapter.swap(savedInstanceState.getParcelableArrayList(BUNDLE_LIST_CONTENT))
+            listState = savedInstanceState.getParcelable(BUNDLE_LIST_STATE)
+            movieList.layoutManager!!.onRestoreInstanceState(listState)
+            loadedUpTo = savedInstanceState.getInt(BUNDLE_PAGE)
+            currentSearch = savedInstanceState.getString(BUNDLE_QUERY)
+        }
+
+        scrollListener = object : EndlessRecyclerViewScrollListener(movieList.layoutManager as LinearLayoutManager) {
+            override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView) {
+                Log.i("PAGES", "Listener: $page $loadedUpTo $totalItemsCount")
+                getMoreMovies(currentSearch, page)
+            }
+        }
+
         movieList.addOnScrollListener(scrollListener)
+
+        if (loadedUpTo != 0) {
+            scrollListener.restoreInPosition(loadedUpTo)
+        }
 
         searchView.setOnQueryTextListener(object : SimpleSearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -97,6 +125,8 @@ class MovieListActivity : AppCompatActivity() {
             return
         }
 
+        Log.i("PAGES", "Function: $page $loadedUpTo")
+
         disposables.clear()
 
         if (query.isEmpty()) {
@@ -144,6 +174,15 @@ class MovieListActivity : AppCompatActivity() {
                             }
             )
         }
+    }
+
+    public override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelable(BUNDLE_LIST_STATE, movieList.layoutManager?.onSaveInstanceState())
+        outState.putParcelableArrayList(BUNDLE_LIST_CONTENT, moviesAdapter.getList())
+        outState.putString(BUNDLE_QUERY, currentSearch)
+        outState.putInt(BUNDLE_PAGE, loadedUpTo)
     }
 
     private fun resetList(movies: List<Movie>) {

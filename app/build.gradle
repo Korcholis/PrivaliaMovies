@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'org.jetbrains.kotlin.android.extensions'
 
 apply from: "$rootDir/buildsystem/dependencies.gradle"
 
@@ -32,6 +33,10 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    androidExtensions {
+        experimental = true
+    }
 }
 
 dependencies {
@@ -42,7 +47,6 @@ dependencies {
     implementation libraries.support_v4
     implementation libraries.recyclerview
     implementation libraries.design
-    implementation libraries.cardview
     implementation libraries.palette
     implementation libraries.constraint
 
@@ -56,7 +60,6 @@ dependencies {
     implementation libraries.moshi_converter
 
     implementation libraries.picasso
-    implementation libraries.picasso_palette
 
     implementation libraries.simple_search
 

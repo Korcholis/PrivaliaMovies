@@ -1,8 +1,8 @@
 package com.korcholis.privaliamovies.ui
 
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.GridLayoutManager
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
 
 
@@ -17,7 +17,7 @@ abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrollListener
     // True if we are still waiting for the last set of data to load.
     private var loading = true
     // Sets the starting page index
-    private val startingPageIndex = 0
+    private var startingPageIndex = 0
 
     internal var mLayoutManager: RecyclerView.LayoutManager
 
@@ -27,12 +27,12 @@ abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrollListener
 
     constructor(layoutManager: GridLayoutManager) {
         this.mLayoutManager = layoutManager
-        visibleThreshold = visibleThreshold * layoutManager.spanCount
+        visibleThreshold *= layoutManager.spanCount
     }
 
     constructor(layoutManager: StaggeredGridLayoutManager) {
         this.mLayoutManager = layoutManager
-        visibleThreshold = visibleThreshold * layoutManager.spanCount
+        visibleThreshold *= layoutManager.spanCount
     }
 
     fun getLastVisibleItem(lastVisibleItemPositions: IntArray): Int {
@@ -97,6 +97,13 @@ abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrollListener
         this.currentPage = this.startingPageIndex
         this.previousTotalItemCount = 0
         this.loading = true
+    }
+
+    // Call this method whenever performing new searches
+    fun restoreInPosition(currentPage: Int) {
+        this.currentPage = currentPage
+        this.previousTotalItemCount = mLayoutManager.itemCount
+        this.loading = false
     }
 
     // Defines the process for actually loading more data based on page
