@@ -2,6 +2,7 @@ package com.korcholis.privaliamovies
 
 import android.os.Bundle
 import android.os.Parcelable
+import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -10,6 +11,7 @@ import android.view.Menu
 import android.view.MenuItem
 import com.ferfalk.simplesearchview.SimpleSearchView
 import com.korcholis.privaliamovies.data.TMDbApi
+import com.korcholis.privaliamovies.exceptions.ConnectionNotAvailableException
 import com.korcholis.privaliamovies.models.Movie
 import com.korcholis.privaliamovies.models.MovieList
 import com.korcholis.privaliamovies.ui.EndlessRecyclerViewScrollListener
@@ -38,6 +40,9 @@ class MovieListActivity : AppCompatActivity() {
     private val disposables = CompositeDisposable()
 
     private lateinit var scrollListener: EndlessRecyclerViewScrollListener
+
+    private var errorSnackbar: Snackbar? = null
+    private var noConnSnackbar: Snackbar? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -116,12 +121,45 @@ class MovieListActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun getMoreMovies(query: String = "", page: Int = 1) {
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelable(BUNDLE_LIST_STATE, movieList.layoutManager?.onSaveInstanceState())
+        outState.putParcelableArrayList(BUNDLE_LIST_CONTENT, moviesAdapter.getList())
+        outState.putString(BUNDLE_QUERY, currentSearch)
+        outState.putInt(BUNDLE_PAGE, loadedUpTo)
+    }
+
+    private fun showErrorSnack() {
+        errorSnackbar = Snackbar.make(
+                root,
+                "You can't get more movies for now.",
+                Snackbar.LENGTH_INDEFINITE
+        ).setAction("Try again") {
+            getMoreMovies(currentSearch, loadedUpTo, forceRefresh = true)
+        }
+
+        errorSnackbar!!.show()
+    }
+
+    private fun showNoConnSnack() {
+        noConnSnackbar = Snackbar.make(
+                root,
+                "You are not connected to the internet.",
+                Snackbar.LENGTH_INDEFINITE
+        ).setAction("Try again") {
+            getMoreMovies(currentSearch, loadedUpTo, forceRefresh = true)
+        }
+
+        noConnSnackbar!!.show()
+    }
+
+    private fun getMoreMovies(query: String = "", page: Int = 1, forceRefresh: Boolean = false) {
         if (query != currentSearch) {
             loadedUpTo = 1
             currentSearch = query
             resetList(listOf())
-        } else if (page <= loadedUpTo) {
+        } else if (page <= loadedUpTo && !forceRefresh) {
             return
         }
 
@@ -136,14 +174,27 @@ class MovieListActivity : AppCompatActivity() {
                             .subscribeOn(Schedulers.computation())
                             .observeOn(AndroidSchedulers.mainThread())
                             .doOnError {
-                                it.localizedMessage
+                                if (it is ConnectionNotAvailableException) {
+                                    showNoConnSnack()
+                                } else {
+                                    showErrorSnack()
+                                }
+                            }
+                            .onErrorReturn {
+                                MovieList(listOf(), loadedUpTo)
                             }
                             .subscribe { response: MovieList, issue ->
+                                if (issue != null) {
+                                    if (issue is ConnectionNotAvailableException) {
+                                        showNoConnSnack()
+                                    } else {
+                                        showErrorSnack()
+                                    }
+                                    return@subscribe
+                                }
+
                                 loadedUpTo = page
 
-                                if (issue != null) {
-                                    issue.localizedMessage
-                                }
                                 if (loadedUpTo == 1) {
                                     resetList(response.results)
                                 } else {
@@ -158,14 +209,27 @@ class MovieListActivity : AppCompatActivity() {
                             .subscribeOn(Schedulers.computation())
                             .observeOn(AndroidSchedulers.mainThread())
                             .doOnError {
-                                it.localizedMessage
+                                if (it is ConnectionNotAvailableException) {
+                                    showNoConnSnack()
+                                } else {
+                                    showErrorSnack()
+                                }
+                            }
+                            .onErrorReturn {
+                                MovieList(listOf(), loadedUpTo)
                             }
                             .subscribe { response: MovieList, issue ->
+                                if (issue != null) {
+                                    if (issue is ConnectionNotAvailableException) {
+                                        showNoConnSnack()
+                                    } else {
+                                        showErrorSnack()
+                                    }
+                                    return@subscribe
+                                }
+
                                 loadedUpTo = page
 
-                                if (issue != null) {
-                                    issue.localizedMessage
-                                }
                                 if (loadedUpTo == 1) {
                                     resetList(response.results)
                                 } else {
@@ -174,15 +238,6 @@ class MovieListActivity : AppCompatActivity() {
                             }
             )
         }
-    }
-
-    public override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-
-        outState.putParcelable(BUNDLE_LIST_STATE, movieList.layoutManager?.onSaveInstanceState())
-        outState.putParcelableArrayList(BUNDLE_LIST_CONTENT, moviesAdapter.getList())
-        outState.putString(BUNDLE_QUERY, currentSearch)
-        outState.putInt(BUNDLE_PAGE, loadedUpTo)
     }
 
     private fun resetList(movies: List<Movie>) {
