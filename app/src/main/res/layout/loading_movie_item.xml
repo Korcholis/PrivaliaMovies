@@ -7,14 +7,14 @@
     android:padding="16dp">
 
     <ProgressBar
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="@dimen/loading_pb_size"
+        android:layout_height="@dimen/loading_pb_size"
         android:indeterminate="true" />
 
     <android.support.v7.widget.AppCompatTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingStart="16dp"
+        android:paddingStart="@dimen/loading_text_padding_start"
         android:text="Loading more movies…"
-        android:textSize="28sp" />
+        style="@style/MovieSynopsis" />
 </LinearLayout>

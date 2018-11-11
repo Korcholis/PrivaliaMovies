@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="fab_margin">16dp</dimen>
-    <dimen name="item_width">200dp</dimen>
-    <dimen name="text_margin">16dp</dimen>
+    <dimen name="poster_width">100dp</dimen>
+    <dimen name="poster_height">128dp</dimen>
+    <dimen name="title_text_size">24sp</dimen>
+    <dimen name="synopsis_text_size">18sp</dimen>
+    <dimen name="year_text_size">16sp</dimen>
+    <dimen name="poster_margin">8dp</dimen>
+    <dimen name="text_margin_start">24dp</dimen>
+    <dimen name="text_margin_top">8dp</dimen>
+    <dimen name="text_margin_end">16dp</dimen>
+    <dimen name="year_margin_end">16dp</dimen>
+    <dimen name="year_margin_gone_end">24dp</dimen>
+    <dimen name="loading_pb_size">32dp</dimen>
+    <dimen name="loading_text_padding_start">16dp</dimen>
+    <dimen name="list_item_padding_bottom">24dp</dimen>
 </resources>
