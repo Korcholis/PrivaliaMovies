@@ -4,6 +4,7 @@ import android.content.Context
 import android.support.v7.widget.AppCompatImageView
 import android.support.v7.widget.AppCompatTextView
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,27 +21,38 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
     companion object {
         const val CELL_TYPE_MOVIE = 0
         const val CELL_TYPE_LOADING = 1
+        const val CELL_TYPE_NO_MORE_RESULTS = 2
     }
 
     private var movieList: MutableList<Movie> = mutableListOf()
+    private var canLoadMore: Boolean = true
 
     fun add(movies: List<Movie>) {
         movieList.addAll(movies)
+        canLoadMore = movies.isNotEmpty()
         notifyDataSetChanged()
     }
 
     fun swap(movies: List<Movie>) {
         movieList = movies.toMutableList()
+        canLoadMore = true
         notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, position: Int): MovieOrLoadingViewHolder {
-        if (getItemViewType(position) == CELL_TYPE_MOVIE) {
-            val view = LayoutInflater.from(context).inflate(R.layout.movie_list_item, parent, false)
-            return MovieOrLoadingViewHolder(view, CELL_TYPE_MOVIE)
-        } else {
-            val view = LayoutInflater.from(context).inflate(R.layout.loading_movie_item, parent, false)
-            return MovieOrLoadingViewHolder(view, CELL_TYPE_LOADING)
+        return when (getItemViewType(position)) {
+            CELL_TYPE_MOVIE -> {
+                val view = LayoutInflater.from(context).inflate(R.layout.movie_list_item, parent, false)
+                MovieOrLoadingViewHolder(view, CELL_TYPE_MOVIE)
+            }
+            CELL_TYPE_LOADING -> {
+                val view = LayoutInflater.from(context).inflate(R.layout.loading_movie_item, parent, false)
+                MovieOrLoadingViewHolder(view, CELL_TYPE_LOADING)
+            }
+            else -> {
+                val view = LayoutInflater.from(context).inflate(R.layout.no_more_movies_item, parent, false)
+                MovieOrLoadingViewHolder(view, CELL_TYPE_NO_MORE_RESULTS)
+            }
         }
     }
 
@@ -49,14 +61,15 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (position >= movieList.size)
-            CELL_TYPE_LOADING
-        else
-            CELL_TYPE_MOVIE
+        return when {
+            position >= movieList.size && canLoadMore -> CELL_TYPE_LOADING
+            position >= movieList.size && !canLoadMore -> CELL_TYPE_NO_MORE_RESULTS
+            else -> CELL_TYPE_MOVIE
+        }
     }
 
     override fun onBindViewHolder(holder: MovieOrLoadingViewHolder, position: Int) {
-        if (getItemViewType(position) == CELL_TYPE_LOADING) return
+        if (getItemViewType(position) != CELL_TYPE_MOVIE) return
 
         val movie = movieList[position]
         holder.title?.text = movie.title
@@ -69,6 +82,8 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
         }
 
         holder?.poster.let {
+            Picasso.with(context).cancelRequest(holder.poster)
+
             movie.poster?.let {
                 Picasso.with(context).load(movie.getPosterPath()).into(holder.poster)
             }

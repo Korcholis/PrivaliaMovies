@@ -92,7 +92,7 @@ class MovieListActivity : AppCompatActivity() {
         if (query != currentSearch) {
             loadedUpTo = 1
             currentSearch = query
-            resetList(mutableListOf())
+            resetList(listOf())
         } else if (page <= loadedUpTo) {
             return
         }
