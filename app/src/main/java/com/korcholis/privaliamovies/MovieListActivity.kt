@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import com.ferfalk.simplesearchview.SimpleSearchView
 import com.korcholis.privaliamovies.data.TMDbApi
 import com.korcholis.privaliamovies.exceptions.ConnectionNotAvailableException
@@ -155,6 +156,8 @@ class MovieListActivity : AppCompatActivity() {
     }
 
     private fun getMoreMovies(query: String = "", page: Int = 1, forceRefresh: Boolean = false) {
+        showList()
+
         if (query != currentSearch) {
             loadedUpTo = 1
             currentSearch = query
@@ -231,6 +234,11 @@ class MovieListActivity : AppCompatActivity() {
                                 loadedUpTo = page
 
                                 if (loadedUpTo == 1) {
+                                    if (response.results.isEmpty()) {
+                                        showEmptyList()
+                                    } else {
+                                        showList()
+                                    }
                                     resetList(response.results)
                                 } else {
                                     updateList(response.results)
@@ -238,6 +246,16 @@ class MovieListActivity : AppCompatActivity() {
                             }
             )
         }
+    }
+
+    private fun showList() {
+        emptyList.visibility = View.GONE
+        movieList.visibility = View.VISIBLE
+    }
+
+    private fun showEmptyList() {
+        emptyList.visibility = View.VISIBLE
+        movieList.visibility = View.GONE
     }
 
     private fun resetList(movies: List<Movie>) {

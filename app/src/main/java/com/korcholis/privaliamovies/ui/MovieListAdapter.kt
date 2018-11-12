@@ -84,8 +84,10 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
         holder?.poster.let {
             Picasso.with(context).cancelRequest(holder.poster)
 
-            movie.poster?.let {
-                Picasso.with(context).load(movie.getPosterPath()).into(holder.poster)
+            if(movie.poster != null) {
+                Picasso.with(context).load(movie.getPosterPath()).placeholder(R.drawable.movie_loading).into(holder.poster)
+            } else {
+                holder.poster?.setImageResource(R.drawable.movie_error)
             }
         }
     }
