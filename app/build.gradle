@@ -66,4 +66,7 @@ dependencies {
     testImplementation libraries.junit
     androidTestImplementation libraries.test_runner
     androidTestImplementation libraries.espresso
+    androidTestImplementation libraries.kakao
+    androidTestImplementation libraries.test_rules
+    androidTestImplementation libraries.espresso_intents
 }
