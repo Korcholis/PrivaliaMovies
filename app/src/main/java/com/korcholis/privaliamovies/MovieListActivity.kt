@@ -171,7 +171,7 @@ class MovieListActivity : AppCompatActivity() {
             disposables.add(
                     TMDbApi.instance(this)
                             .movieList(page)
-                            .subscribeOn(Schedulers.computation())
+                            .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .doOnError {
                                 if (it is ConnectionNotAvailableException) {
@@ -206,7 +206,7 @@ class MovieListActivity : AppCompatActivity() {
             disposables.add(
                     TMDbApi.instance(this)
                             .search(query, page)
-                            .subscribeOn(Schedulers.computation())
+                            .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .doOnError {
                                 if (it is ConnectionNotAvailableException) {
