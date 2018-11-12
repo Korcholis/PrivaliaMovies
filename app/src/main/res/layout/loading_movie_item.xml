@@ -7,11 +7,13 @@
     android:padding="16dp">
 
     <ProgressBar
+        android:id="@+id/loadingPb"
         android:layout_width="@dimen/loading_pb_size"
         android:layout_height="@dimen/loading_pb_size"
         android:indeterminate="true" />
 
     <android.support.v7.widget.AppCompatTextView
+        android:id="@+id/loadingText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingStart="@dimen/loading_text_padding_start"
