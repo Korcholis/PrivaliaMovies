@@ -21,6 +21,6 @@
         android:drawableTop="@drawable/movie_not_available"
         android:gravity="center"
         android:padding="@dimen/empty_list_padding"
-        android:text="Snap! There were no movies for this search."
+        android:text="@string/empty_list"
         android:visibility="gone" />
 </merge>
