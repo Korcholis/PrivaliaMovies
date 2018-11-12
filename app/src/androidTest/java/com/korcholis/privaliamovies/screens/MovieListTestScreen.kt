@@ -21,6 +21,7 @@ class MovieListTestScreen : Screen<MovieListTestScreen>() {
         itemType(::MovieItem)
         itemType(::LoadingItem)
     })
+    val emptyList = KView { withId(R.id.emptyList) }
 
     class MovieItem(parent: Matcher<View>) : KRecyclerItem<MovieItem>(parent) {
         init {

@@ -93,6 +93,25 @@ class MovieListActivityEspressoTest {
     }
 
     @Test
+    fun searchTrashShowsEmptyList() {
+        appScreen {
+            openSearchBtn {
+                click(GeneralLocation.CENTER)
+            }
+            searchEditText {
+                typeText("jjjj")
+            }
+
+            movieList {
+                isGone()
+            }
+            emptyList {
+                isVisible()
+            }
+        }
+    }
+
+    @Test
     fun useAppContext() {
         val appContext = InstrumentationRegistry.getTargetContext()
         assertEquals("com.korcholis.privaliamovies", appContext.packageName)
