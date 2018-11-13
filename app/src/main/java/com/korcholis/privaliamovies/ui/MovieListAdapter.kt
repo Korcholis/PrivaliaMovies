@@ -4,7 +4,6 @@ import android.content.Context
 import android.support.v7.widget.AppCompatImageView
 import android.support.v7.widget.AppCompatTextView
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -81,14 +80,12 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
             holder.releaseYear?.text = calendar.get(Calendar.YEAR).toString()
         }
 
-        holder?.poster.let {
-            Picasso.with(context).cancelRequest(holder.poster)
+        Picasso.with(context).cancelRequest(holder.poster)
 
-            if(movie.poster != null) {
-                Picasso.with(context).load(movie.getPosterPath()).placeholder(R.drawable.movie_loading).into(holder.poster)
-            } else {
-                holder.poster?.setImageResource(R.drawable.movie_error)
-            }
+        if (movie.poster != null) {
+            Picasso.with(context).load(movie.getPosterPath()).placeholder(R.drawable.movie_loading).into(holder.poster)
+        } else {
+            holder.poster?.setImageResource(R.drawable.movie_error)
         }
     }
 
@@ -96,13 +93,13 @@ class MovieListAdapter(private val context: Context) : RecyclerView.Adapter<Movi
         return movieList as ArrayList<Movie>
     }
 
-    class MovieOrLoadingViewHolder : RecyclerView.ViewHolder {
+    class MovieOrLoadingViewHolder(view: View, type: Int) : RecyclerView.ViewHolder(view) {
         var poster: AppCompatImageView? = null
         var title: AppCompatTextView? = null
         var synopsis: AppCompatTextView? = null
         var releaseYear: AppCompatTextView? = null
 
-        constructor(view: View, type: Int) : super(view) {
+        init {
             if (type == CELL_TYPE_MOVIE) {
                 poster = view.poster
                 title = view.title
