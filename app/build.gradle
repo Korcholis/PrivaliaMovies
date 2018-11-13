@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'org.jetbrains.kotlin.android.extensions'
 
 apply from: "$rootDir/buildsystem/dependencies.gradle"
 
@@ -11,8 +12,8 @@ android {
         applicationId "com.korcholis.privaliamovies"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        versionCode 500
+        versionName "0.5.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -25,6 +26,16 @@ android {
 
     buildTypes.each {
         it.buildConfigField 'String', 'TMDB_API_KEY', TMDB_API_KEY
+        it.buildConfigField 'String', 'CACHE_DIR', CACHE_DIR
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    androidExtensions {
+        experimental = true
     }
 }
 
@@ -36,8 +47,8 @@ dependencies {
     implementation libraries.support_v4
     implementation libraries.recyclerview
     implementation libraries.design
-    implementation libraries.cardview
     implementation libraries.palette
+    implementation libraries.constraint
 
     implementation libraries.rx_android
     implementation libraries.rx_java
@@ -49,9 +60,13 @@ dependencies {
     implementation libraries.moshi_converter
 
     implementation libraries.picasso
-    implementation libraries.picasso_palette
+
+    implementation libraries.simple_search
 
     testImplementation libraries.junit
     androidTestImplementation libraries.test_runner
     androidTestImplementation libraries.espresso
+    androidTestImplementation libraries.kakao
+    androidTestImplementation libraries.test_rules
+    androidTestImplementation libraries.espresso_intents
 }

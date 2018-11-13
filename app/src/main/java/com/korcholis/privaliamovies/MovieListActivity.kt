@@ -1,114 +1,268 @@
 package com.korcholis.privaliamovies
 
-import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.RecyclerView
+import android.os.Parcelable
 import android.support.design.widget.Snackbar
-import android.view.LayoutInflater
+import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
+import com.ferfalk.simplesearchview.SimpleSearchView
+import com.korcholis.privaliamovies.data.TMDbApi
+import com.korcholis.privaliamovies.exceptions.ConnectionNotAvailableException
+import com.korcholis.privaliamovies.models.Movie
+import com.korcholis.privaliamovies.models.MovieList
+import com.korcholis.privaliamovies.ui.EndlessRecyclerViewScrollListener
+import com.korcholis.privaliamovies.ui.MovieListAdapter
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.activity_movie_list.*
+import kotlinx.android.synthetic.main.movie_list_content.*
 
-import com.korcholis.privaliamovies.dummy.DummyContent
-import kotlinx.android.synthetic.main.activity_item_list.*
-import kotlinx.android.synthetic.main.item_list_content.view.*
-import kotlinx.android.synthetic.main.item_list.*
 
-/**
- * An activity representing a list of Pings. This activity
- * has different presentations for handset and tablet-size devices. On
- * handsets, the activity presents a list of items, which when touched,
- * lead to a [MovieDetailActivity] representing
- * item details. On tablets, the activity presents the list of items and
- * item details side-by-side using two vertical panes.
- */
 class MovieListActivity : AppCompatActivity() {
 
-    /**
-     * Whether or not the activity is in two-pane mode, i.e. running on a tablet
-     * device.
-     */
-    private var twoPane: Boolean = false
+    companion object {
+        private const val BUNDLE_LIST_STATE = "listState"
+        private const val BUNDLE_LIST_CONTENT = "movieList"
+        private const val BUNDLE_QUERY = "currentSearch"
+        private const val BUNDLE_PAGE = "loadedUpTo"
+    }
+
+    private var loadedUpTo: Int = 0
+    private var currentSearch: String = ""
+    private var listState: Parcelable? = null
+
+    private var moviesAdapter: MovieListAdapter = MovieListAdapter(this)
+    private val disposables = CompositeDisposable()
+
+    private lateinit var scrollListener: EndlessRecyclerViewScrollListener
+
+    private var errorSnackbar: Snackbar? = null
+    private var noConnSnackbar: Snackbar? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_item_list)
-
+        setContentView(R.layout.activity_movie_list)
         setSupportActionBar(toolbar)
-        toolbar.title = title
 
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+        title = resources.getString(R.string.app_name)
+
+        movieList.adapter = moviesAdapter
+
+        movieList.layoutManager = LinearLayoutManager(this)
+
+        savedInstanceState?.let {
+            moviesAdapter.swap(savedInstanceState.getParcelableArrayList(BUNDLE_LIST_CONTENT))
+            listState = savedInstanceState.getParcelable(BUNDLE_LIST_STATE)
+            movieList.layoutManager!!.onRestoreInstanceState(listState)
+            loadedUpTo = savedInstanceState.getInt(BUNDLE_PAGE)
+            currentSearch = savedInstanceState.getString(BUNDLE_QUERY)
         }
 
-        if (item_detail_container != null) {
-            // The detail container view will be present only in the
-            // large-screen layouts (res/values-w900dp).
-            // If this view is present, then the
-            // activity should be in two-pane mode.
-            twoPane = true
+        scrollListener = object : EndlessRecyclerViewScrollListener(movieList.layoutManager as LinearLayoutManager) {
+            override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView) {
+                Log.i("PAGES", "Listener: $page $loadedUpTo $totalItemsCount")
+                getMoreMovies(currentSearch, page)
+            }
         }
 
-        setupRecyclerView(item_list)
-    }
+        movieList.addOnScrollListener(scrollListener)
 
-    private fun setupRecyclerView(recyclerView: RecyclerView) {
-        recyclerView.adapter = SimpleItemRecyclerViewAdapter(this, DummyContent.ITEMS, twoPane)
-    }
+        if (loadedUpTo != 0) {
+            scrollListener.restoreInPosition(loadedUpTo)
+        }
 
-    class SimpleItemRecyclerViewAdapter(private val parentActivity: MovieListActivity,
-                                        private val values: List<DummyContent.DummyItem>,
-                                        private val twoPane: Boolean) :
-            RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
+        searchView.setOnQueryTextListener(object : SimpleSearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return true
+            }
 
-        private val onClickListener: View.OnClickListener
-
-        init {
-            onClickListener = View.OnClickListener { v ->
-                val item = v.tag as DummyContent.DummyItem
-                if (twoPane) {
-                    val fragment = MovieDetailFragment().apply {
-                        arguments = Bundle().apply {
-                            putString(MovieDetailFragment.ARG_ITEM_ID, item.id)
-                        }
+            override fun onQueryTextChange(newText: String?): Boolean {
+                newText?.let {
+                    if (newText.length > 3 || newText.isEmpty()) {
+                        getMoreMovies(newText)
                     }
-                    parentActivity.supportFragmentManager
-                            .beginTransaction()
-                            .replace(R.id.item_detail_container, fragment)
-                            .commit()
-                } else {
-                    val intent = Intent(v.context, MovieDetailActivity::class.java).apply {
-                        putExtra(MovieDetailFragment.ARG_ITEM_ID, item.id)
-                    }
-                    v.context.startActivity(intent)
                 }
+
+                return true
+            }
+
+            override fun onQueryTextCleared(): Boolean {
+                getMoreMovies()
+
+                return true
+            }
+
+        })
+    }
+
+    override fun onDestroy() {
+        disposables.dispose()
+        super.onDestroy()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        when (item?.itemId) {
+            R.id.actionOpenSearch -> {
+                searchView.showSearch()
+                return true
             }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_list_content, parent, false)
-            return ViewHolder(view)
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelable(BUNDLE_LIST_STATE, movieList.layoutManager?.onSaveInstanceState())
+        outState.putParcelableArrayList(BUNDLE_LIST_CONTENT, moviesAdapter.getList())
+        outState.putString(BUNDLE_QUERY, currentSearch)
+        outState.putInt(BUNDLE_PAGE, loadedUpTo)
+    }
+
+    private fun showErrorSnack() {
+        errorSnackbar = Snackbar.make(
+                root,
+                "You can't get more movies for now.",
+                Snackbar.LENGTH_INDEFINITE
+        ).setAction("Try again") {
+            getMoreMovies(currentSearch, loadedUpTo, forceRefresh = true)
         }
 
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = values[position]
-            holder.idView.text = item.id
-            holder.contentView.text = item.content
+        errorSnackbar!!.show()
+    }
 
-            with(holder.itemView) {
-                tag = item
-                setOnClickListener(onClickListener)
-            }
+    private fun showNoConnSnack() {
+        noConnSnackbar = Snackbar.make(
+                root,
+                "You are not connected to the internet.",
+                Snackbar.LENGTH_INDEFINITE
+        ).setAction("Try again") {
+            getMoreMovies(currentSearch, loadedUpTo, forceRefresh = true)
         }
 
-        override fun getItemCount() = values.size
+        noConnSnackbar!!.show()
+    }
 
-        inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val idView: TextView = view.id_text
-            val contentView: TextView = view.content
+    private fun getMoreMovies(query: String = "", page: Int = 1, forceRefresh: Boolean = false) {
+        showList()
+
+        if (query != currentSearch) {
+            loadedUpTo = 1
+            currentSearch = query
+            resetList(listOf())
+        } else if (page <= loadedUpTo && !forceRefresh) {
+            return
         }
+
+        Log.i("PAGES", "Function: $page $loadedUpTo")
+
+        disposables.clear()
+
+        if (query.isEmpty()) {
+            disposables.add(
+                    TMDbApi.instance(this)
+                            .movieList(page)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .doOnError {
+                                if (it is ConnectionNotAvailableException) {
+                                    showNoConnSnack()
+                                } else {
+                                    showErrorSnack()
+                                }
+                            }
+                            .onErrorReturn {
+                                MovieList(listOf(), loadedUpTo)
+                            }
+                            .subscribe { response: MovieList, issue ->
+                                if (issue != null) {
+                                    if (issue is ConnectionNotAvailableException) {
+                                        showNoConnSnack()
+                                    } else {
+                                        showErrorSnack()
+                                    }
+                                    return@subscribe
+                                }
+
+                                loadedUpTo = page
+
+                                if (loadedUpTo == 1) {
+                                    resetList(response.results)
+                                } else {
+                                    updateList(response.results)
+                                }
+                            }
+            )
+        } else {
+            disposables.add(
+                    TMDbApi.instance(this)
+                            .search(query, page)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .doOnError {
+                                if (it is ConnectionNotAvailableException) {
+                                    showNoConnSnack()
+                                } else {
+                                    showErrorSnack()
+                                }
+                            }
+                            .onErrorReturn {
+                                MovieList(listOf(), loadedUpTo)
+                            }
+                            .subscribe { response: MovieList, issue ->
+                                if (issue != null) {
+                                    if (issue is ConnectionNotAvailableException) {
+                                        showNoConnSnack()
+                                    } else {
+                                        showErrorSnack()
+                                    }
+                                    return@subscribe
+                                }
+
+                                loadedUpTo = page
+
+                                if (loadedUpTo == 1) {
+                                    if (response.results.isEmpty()) {
+                                        showEmptyList()
+                                    } else {
+                                        showList()
+                                    }
+                                    resetList(response.results)
+                                } else {
+                                    updateList(response.results)
+                                }
+                            }
+            )
+        }
+    }
+
+    private fun showList() {
+        emptyList.visibility = View.GONE
+        movieList.visibility = View.VISIBLE
+    }
+
+    private fun showEmptyList() {
+        emptyList.visibility = View.VISIBLE
+        movieList.visibility = View.GONE
+    }
+
+    private fun resetList(movies: List<Movie>) {
+        moviesAdapter.swap(movies)
+    }
+
+    private fun updateList(movies: List<Movie>) {
+        moviesAdapter.add(movies)
     }
 }
